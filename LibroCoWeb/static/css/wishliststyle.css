@@ -13,14 +13,13 @@
     font-size: 18px;
     margin-left: 5px;
     border-radius: 5px;
-    margin-top: -.3px;
 }
 
 .delete-button {
     border: none;
     color: #6F0C0C;
     background-color: #f8f8f8;
-    margin-left: -3px;
+    margin-left: 6px;
     font-size: 18px;
 }
 
@@ -99,4 +98,8 @@
     border-radius: 4px;
     margin: 10px 0;
     text-align: center;
+}
+
+.button-container {
+    margin-top: 14px;
 }

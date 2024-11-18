@@ -25,6 +25,12 @@ a:active {
     margin-right: 0;
 }
 
+.loogo {
+    /* OUR LOGO */
+    margin: -10px;
+    margin-right: 0;
+}
+
 .logoo {
     /* OUR LOGO */
     margin: -9px;
@@ -123,9 +129,9 @@ nav a {
 .main-content {
     margin: 10px;
 }
-.header-row {
+.header-row, header-row2 {
     display: flex;
-    justify-content: flex-start;
+    justify-content: flex-end;
     align-items: center;
     margin-top: 10px;
     margin-bottom: 10px;
@@ -188,3 +194,11 @@ nav a {
     margin-left: -8px;
     margin-right: -8px;
 }
+
+.diivider {
+    width: auto;
+    height: 2px;
+    background-color: #ccc;
+    margin-top: 10px;
+}
+

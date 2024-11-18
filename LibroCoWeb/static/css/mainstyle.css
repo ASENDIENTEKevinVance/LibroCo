@@ -23,6 +23,23 @@ body {
 
 }
 
+.naavbar-links {
+    display: flex;
+    margin-left: -1px;
+    gap: 20px;
+    margin-top: -2px;
+}
+
+.naavbar-right{
+    margin-top: -7px;
+    display: flex;
+    margin-left: auto;
+    margin-right: -3.5px;
+    gap: 28px;
+    padding-right: 11.5px;
+    font-size: 18px;
+}
+
 nav a:hover,
 a:active {
     color: black;

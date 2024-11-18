@@ -73,26 +73,7 @@ nav {
     margin: 0 20px;
     margin-left: 20px;
 }
-/*
-.separatorr {
-    height: 45.5px;
-    width: 1px;
-    background-color: #ddd;
-    margin-left: 28px;
-    margin-right: 20px;
-    margin-top: 3px;
-}
-*/
-/* Styling for the main navigation links */
-/*
-.navbar-linkss {
-    display: flex;
-    margin-left: 3px;
-    gap: 24.5px;
-    margin-top: 2px;
-    font-size: 18px;
-}
-*/
+
 .navbar-links {
     display: flex;
     margin-top: -1px;
@@ -157,28 +138,12 @@ nav a {
     border-radius: 5px;
     font-weight: normal;
 }
-/*
-.activee {
-    background-color: #ffedbd;
-    border-radius: 5px;
-    font-weight: normal;
-    padding: 10px;
-    margin-left: 0px;
-}
-*/
+
 nav a:hover,
 a:active {
     color: black;
     border-radius: 10px;
 }
-/*
-nav a:hover,
-a:activee {
-    color: black;
-    border-radius: 10px;
-}
-*/
-
 
 /* Adjust the alignment for smaller screens */
 @media (max-width: 768px) {
@@ -540,3 +505,17 @@ button.approve-btn.disabled {
     opacity: 0.5;
 }
 
+
+/* DELETE BUTTON STYLESS */
+.delete_button {
+    background-color: #f8f8f8;
+    color: rgb(255, 2, 2);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.delete_button:hover {
+    background-color: #ff7878;
+}

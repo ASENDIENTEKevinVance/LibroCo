@@ -86,6 +86,7 @@
 					<div class="addbook_button_group">
 						<!-- Cancel and Save buttons -->
 						<a href="{{ url_for('books', book_id=book['book_id']) }}" class="back_button">Cancel</a>
+                        <a href="{{ url_for('delete_book', book_id=book['book_id']) }}" class="delete_button">Delete</a>
 						<button type="submit" class="save_button">Save Changes</button>
 					</div>
 				</div>
@@ -107,8 +108,3 @@
     </script>
 </body>
 </html>
-
-
-<!-- <label for="image_upload">Upload New Image (optional)</label>
-                <input type="file" id="image_upload" name="image_upload" onchange="readURL(this)">
-                <p>Current image: <img src="{{ url_for('static', filename=book['image']) }}" alt="Current Image" width="100"></p> -->

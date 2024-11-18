@@ -3,6 +3,7 @@ from dbhelper import *
 from werkzeug.utils import secure_filename
 from flask import send_from_directory
 import os
+import dbhelper
 import random
 import sqlite3
 import string
@@ -270,35 +271,6 @@ def addbook():
     return render_template("addbook.html")
 
 #SAVE BOOK
-# @app.route("/savebook", methods=['GET', 'POST'])
-# def savebook()-> None:
-#     if not os.path.exists(uploadfolder):
-#         os.makedirs(uploadfolder)
-    
-#     book_title = request.form['book_title']
-#     author = request.form['author']
-#     publication_year = request.form['publication_year']
-#     genre = request.form['genre']
-#     description = request.form['description']
-
-#     file = request.files['image_upload']
-#     if file:
-#         filename = os.path.join(uploadfolder, file.filename)
-#         file.save(filename)
-#     else:
-#         filename = 'static/images/blank_image.png'
-
-#     sql = '''INSERT INTO books (book_title, author, publication_year, genre, description, image) 
-#              VALUES (?, ?, ?, ?, ?, ?)'''
-#     params = (book_title, author, publication_year, genre, description, filename)
-#     ok = postprocess(sql, params)
-    
-#     if ok:
-#         flash("Registration Successful")
-#     else:
-#         flash("Registration Failed")
-    
-#     return redirect("/books")
 @app.route("/savebook", methods=["POST"])
 def savebook():
     # Ensure that the librarian is logged in
@@ -345,7 +317,7 @@ def savebook():
             postprocess(sql_insert_status, (new_book_id, 'Available'))
 
             flash(f"The book '{book_title}' has been added successfully and is available for borrowing.")
-            return redirect(url_for("library"))  # Redirect to the library or other page as needed
+            return redirect(url_for("lib_viewbook", book_id=new_book_id))  # Redirect to the library or other page as needed
         else:
             flash("Failed to retrieve the last book_id.")
             return redirect(url_for("add_book"))  # Redirect to the add book page if there was an error
@@ -445,41 +417,37 @@ def edit_book(book_id):
     flash("Book not found")
     return redirect(url_for('books'))
 
+# Delete Book
+@app.route('/delete_book/<int:book_id>', methods=['GET'])
+def delete_book(book_id):
+    try:
+        # Delete related entries from requests, status, and wishlist
+        dbhelper.postprocess("DELETE FROM requests WHERE book_id = ?", (book_id,))
+        dbhelper.postprocess("DELETE FROM status WHERE book_id = ?", (book_id,))
+        dbhelper.postprocess("DELETE FROM wishlist WHERE book_id = ?", (book_id,))
+        
+        # Delete the book from the books table
+        deleted = dbhelper.postprocess("DELETE FROM books WHERE book_id = ?", (book_id,))
+        
+        if deleted:
+            flash("Book deleted successfully!", "success")
+        else:
+            flash("Book not found or couldn't be deleted.", "error")
+    except Exception as e:
+        print(f"Error deleting book: {e}")
+        flash("An error occurred while trying to delete the book.", "error")
+    
+    # Redirect to books page
+    return redirect(url_for('books'))
+
+
+
 # Route to list all books
 @app.route('/books')
 def list_books():
     books = getall_records("books")
     return render_template('list_books.html', books=books)
 
-# KEVIN READER BORROW BOOK REQUEST
-# @app.route("/borrow", methods=["POST"])
-# def borrow():
-#     # Ensure the user (reader) is logged in
-#     if 'user_id' not in session:
-#         flash("You must be logged in to borrow a book.")
-#         return redirect(url_for("login"))
-
-#     # Get the book ID and user ID from the form submission
-#     book_id = request.form.get("book_id")
-#     user_id = request.form.get("user_id")
-
-#     # Check if the book is available
-#     sql_check_availability = "SELECT availability FROM status WHERE book_id = ?"
-#     availability = getprocess(sql_check_availability, (book_id,))
-
-#     if availability and availability[0]["availability"] == "Available":
-#         # Insert the borrow request into the "requests" table
-#         sql_insert_request = """
-#         INSERT INTO requests (user_id, book_id)
-#         VALUES (?, ?)
-#         """
-#         postprocess(sql_insert_request, (user_id, book_id))
-
-#         flash(f"Your request to borrow '{request.form.get('book_title')}' has been submitted to the librarian for approval.")
-#         return redirect(url_for("library"))  # Redirect to the library or another page after the request
-#     else:
-#         flash("Sorry, this book is currently unavailable.")
-#         return redirect(url_for("library"))
 @app.route("/borrow", methods=["POST"])
 def borrow():
     if 'user_id' not in session:
@@ -605,39 +573,6 @@ def get_requests():
     conn.close()
     
     return requests
-
-# @app.route("/requests")
-# def requests():
-#     # Ensure the librarian is logged in
-#     if 'user_id' not in session or session.get('user_id') != 1:
-#         flash("You must be logged in as a librarian to view requests.")
-#         return redirect(url_for("login"))
-
-#     # Get all pending borrow requests (requests that haven't been approved or rejected)
-#     sql_get_requests = """
-#     SELECT r.request_id, r.user_id, r.book_id, b.book_title, u.user_name
-#     FROM requests r
-#     JOIN books b ON r.book_id = b.book_id
-#     JOIN users u ON r.user_id = u.user_id
-#     """
-#     requests = getprocess(sql_get_requests)
-
-#     return render_template("request.html", requests=requests)
-
-
-# @app.route('/approve_request', methods=['POST'])
-# def approve_request():
-#     request_id = request.form['request_id']
-#     # Handle approval logic here (e.g., update status to Approved in the database)
-#     # Redirect back to the requests page
-#     return redirect(url_for('requests'))
-
-# @app.route('/decline_request', methods=['POST'])
-# def decline_request():
-#     request_id = request.form['request_id']
-#     # Handle decline logic here (e.g., delete or update status to Declined in the database)
-#     # Redirect back to the requests page
-#     return redirect(url_for('requests'))
 
 @app.route('/uploads/images/<filename>')
 def upload_image(filename):
@@ -1161,57 +1096,6 @@ def remove_selected_books():
     if success:
         return jsonify(success=True, message="Selected books successfully removed.")
     return jsonify(success=False, message="Failed to remove selected books.")
-
-
-#READER'S WISHLIST
-# @app.route("/wishlist")
-# def wishlist():
-#     if 'user_id' not in session:
-#         return redirect(url_for("login"))
-    
-#     user_id = session.get('user_id') 
-    
-#     sql = """
-#     SELECT b.book_title, b.author, b.publication_year, b.genre
-#     FROM wishlist w
-#     JOIN books b ON w.book_id = b.book_id
-#     WHERE w.user_id = ?
-#     """
-#     wishlist_books = getprocess(sql, (user_id,))
-    
-#     return render_template("wishlist.html", wishlist_books=wishlist_books)
-
-# @app.route("/add_to_wishlist/<int:book_id>")
-# def add_to_wishlist(book_id):
-#     if 'user_id' not in session:
-#         return redirect(url_for("login"))
-    
-#     user_id = session.get('user_id')
-    
-#     sql = "SELECT * FROM wishlist WHERE user_id = ? AND book_id = ?"
-#     existing_entry = getprocess(sql, (user_id, book_id))
-    
-#     if not existing_entry:
-#         sql_insert = "INSERT INTO wishlist (user_id, book_id) VALUES (?, ?)"
-#         postprocess(sql_insert, (user_id, book_id))
-#         flash("Book added to wishlist!")
-#     else:
-#         flash("This book is already in your wishlist.")
-    
-#     return redirect(url_for("library"))
-
-# @app.route("/remove_from_wishlist/<int:book_id>")
-# def remove_from_wishlist(book_id):
-#     if 'user_id' not in session:
-#         return redirect(url_for("login"))
-    
-#     user_id = session.get('user_id')
-    
-#     sql_delete = "DELETE FROM wishlist WHERE user_id = ? AND book_id = ?"
-#     postprocess(sql_delete, (user_id, book_id))
-#     flash("Book removed from wishlist.")
-    
-#     return redirect(url_for("wishlist"))
 
 @app.route("/some_route/<int:book_id>")
 def some_route(book_id):

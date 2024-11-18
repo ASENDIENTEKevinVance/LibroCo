@@ -25,6 +25,12 @@ a:active {
     margin-right: 0;
 }
 
+.loogo {
+    /* OUR LOGO */
+    margin: -10px;
+    margin-right: 0;
+}
+
 .logoo {
     /* OUR LOGO */
     margin: -9px;
@@ -187,4 +193,11 @@ nav a {
     margin-top: 10px;
     margin-left: -8px;
     margin-right: -8px;
+}
+
+.diivider {
+    width: auto;
+    height: 2px;
+    background-color: #ccc;
+    margin-top: 10px;
 }

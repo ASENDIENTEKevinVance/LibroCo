@@ -100,6 +100,7 @@ nav {
 }
 
 /* Styling for the right-aligned links (Profile and Log Out) */
+/*
 .navbar-rightt {
     display: flex;
     margin-left: auto;
@@ -113,6 +114,7 @@ nav {
     background-color: #FFEDBD;
     border-radius: 4px;
 }
+*/
 
 .dividerr {
     width: auto;

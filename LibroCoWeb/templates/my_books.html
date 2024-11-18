@@ -42,29 +42,40 @@
     <!-- Container for "My Books" list -->
     <div class="container">
         <div class="book-list">
-            <!-- First book -->
-            <div class="book-item" id="book1" data-due-date="2024-09-25">
-                <img src="../static/images/book-cover.jpg" alt="Bridgerton Book Cover" class="book-cover">
-                <div class="book-details">
-                    <h2 class="book-title">BRIDGERTON</h2>
-                    <p>Julia Quinn</p><p class="status expiring">Expiring</p> <!-- Moved here -->
-                </div>
-                <button class="return" onclick="returnBook('book1')">Return</button>
-                <button class="renew" onclick="renewBook('book1')">Renew</button>
-            </div>
+            {% for book in books %}
+                <div class="book-item" id="book{{ book['book_id'] }}" data-due-date="{{ book['due_date'] }}">
+                    <img src="{{ url_for('static', filename='images/' + book['image']) }}" alt="{{ book['book_title'] }} Cover" class="book-cover">
+                    <div class="book-details">
+                        <h2 class="book-title">{{ book['book_title'] }}</h2>
+                        <p>{{ book['author'] }}</p>
 
-            <!-- Second book -->
-            <div class="book-item" id="book2" data-due-date="2024-10-10">
-                <img src="../static/images/olympus.jpg" alt="Olympus Academy" class="book-cover">
-                <div class="book-details">
-                    <h2 class="book-title">OLYMPUS ACADEMY</h2>
-                    <p>Mahriyumm</p><p class="status available">Available</p> <!-- Moved here -->
+                        <!-- Status Section -->
+                        <p class="status 
+                            {% if book['due_date'] < today %}
+                                overdue
+                            {% elif book['due_date'] <= today + timedelta(days=3) %}
+                                expiring
+                            {% else %}
+                                available
+                            {% endif %}
+                        ">
+                            {% if book['due_date'] < today %}
+                                Overdue
+                            {% elif book['due_date'] <= today + timedelta(days=3) %}
+                                Expiring
+                            {% else %}
+                                Available
+                            {% endif %}
+                        </p>
+                    </div>
+                    <form action="{{ url_for('return_book', book_id=book['book_id']) }}" method="post">
+                        <button class="return" type="submit">Return</button>
+                    </form>
                 </div>
-                <button class="return" onclick="returnBook('book2')">Return</button>
-                <button class="renew" onclick="renewBook('book2')" disabled>Renew</button>
-            </div>
+            {% endfor %}
         </div>
     </div>
+    
 	
 	<script>
    function returnBook(bookId) {

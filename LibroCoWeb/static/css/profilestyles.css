@@ -3,6 +3,13 @@
     src: url('/static/fonts/IstokWeb-Regular.ttf') format('truetype');
 }
 
+.logo {
+    margin: -9px;
+    margin-right: 0;
+    margin-left: -10px;
+    margin-top: -10px;
+}
+
 .profile_container {
     margin-top: 3rem;
     display: flex;

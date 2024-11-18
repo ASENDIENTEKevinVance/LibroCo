@@ -60,6 +60,13 @@
     gap: 3rem;
 }
 
+.logo {
+    margin: -9px;
+    margin-right: 0;
+    margin-left: -10px;
+    margin-top: -10px;
+}
+
 .cancel_button,
 .save_button {
     padding: 10px 20px;

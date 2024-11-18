@@ -42,37 +42,34 @@
     <!-- Container for "My Books" list -->
     <div class="container">
         <div class="book-list">
-            {% for book in books %}
-                <div class="book-item" id="book{{ book['book_id'] }}" data-due-date="{{ book['due_date'] }}">
-                    <img src="{{ url_for('static', filename='images/' + book['image']) }}" alt="{{ book['book_title'] }} Cover" class="book-cover">
-                    <div class="book-details">
-                        <h2 class="book-title">{{ book['book_title'] }}</h2>
-                        <p>{{ book['author'] }}</p>
+            {% extends "layout.html" %}
 
-                        <!-- Status Section -->
-                        <p class="status 
-                            {% if book['due_date'] < today %}
-                                overdue
-                            {% elif book['due_date'] <= today + timedelta(days=3) %}
-                                expiring
-                            {% else %}
-                                available
-                            {% endif %}
-                        ">
-                            {% if book['due_date'] < today %}
-                                Overdue
-                            {% elif book['due_date'] <= today + timedelta(days=3) %}
-                                Expiring
-                            {% else %}
-                                Available
-                            {% endif %}
-                        </p>
-                    </div>
-                    <form action="{{ url_for('return_book', book_id=book['book_id']) }}" method="post">
-                        <button class="return" type="submit">Return</button>
-                    </form>
-                </div>
-            {% endfor %}
+            {% block content %}
+                <h1>Your Borrowed Books</h1>
+                {% if books %}
+                    <ul>
+                        {% for book in books %}
+                            <li class="book-item" id="book{{ book['book_id'] }}" data-due-date="{{ book['due_date'] }}">
+                                <img src="{{ url_for('static', filename='images/' + book['image']) }}" alt="{{ book['book_title'] }} Cover" class="book-cover">
+                                <div class="book-details">
+                                    <h2 class="book-title">{{ book['book_title'] }}</h2>
+                                    <p>{{ book['author'] }}</p>
+                                    <!-- Status Section -->
+                                    <p class="status {% if book['due_date'] < today %}overdue{% elif book['due_date'] <= today + timedelta(days=3) %}expiring{% else %}available{% endif %}">
+                                        {% if book['due_date'] < today %}Overdue{% elif book['due_date'] <= today + timedelta(days=3) %}Expiring{% else %}Available{% endif %}
+                                    </p>
+                                </div>
+                                <form action="{{ url_for('return_book', book_id=book['book_id']) }}" method="post">
+                                    <button class="return" type="submit">Return</button>
+                                </form>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>You have no borrowed books.</p>
+                {% endif %}
+            {% endblock %}
+
         </div>
     </div>
     

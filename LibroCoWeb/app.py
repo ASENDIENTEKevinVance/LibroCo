@@ -882,30 +882,65 @@ def book2(book_id):
         return redirect(url_for("books"))
 
 #READER'S BORROWED BOOKS
-@app.route('/my_books')
+@app.route("/my_books")
 def my_books():
-    # Ensure user_id is set, e.g., from session or a parameter
-    user_id = 1  # Replace this with the actual user ID (from session, for example)
+    if 'user_id' not in session:
+        return redirect(url_for("login"))
 
-    # Use the getprocess function from dbhelper.py to fetch the books
+    user_id = session['user_id']  # Get user_id from the session
+
+    # Fetch books that the user has borrowed (status = 'Borrowed'), using the book_transactions table
     sql = """
-        SELECT r.book_id, r.book_title, r.author, r.due_date, r.status, r.image
-        FROM books r
-        WHERE r.user_id = ? AND r.status = 'Approved';
+    SELECT b.book_id, b.book_title, b.author, bt.due_date, s.availability, b.image
+    FROM books b
+    JOIN book_transactions bt ON b.book_id = bt.book_id
+    JOIN status s ON b.book_id = s.book_id
+    WHERE bt.user_id = ? AND bt.status = 'Borrowed'
     """
-    books = getprocess(sql, (user_id,))  # Get books borrowed by the user
+    books = getprocess(sql, (user_id,))
 
-    # Convert 'due_date' to datetime.date if it's in string format
+    # Convert the rows into a dictionary format
+    books = [dict(book) for book in books]
+
+    # Optionally, format the due_date if it's a string
     for book in books:
-        if isinstance(book['due_date'], str):
+        if isinstance(book['due_date'], str):  # If it's a string, convert it to a date object
             book['due_date'] = datetime.strptime(book['due_date'], '%Y-%m-%d').date()
 
-    # Get today's date
-    today = datetime.now().date()
+    return render_template('my_books.html', books=books)
 
-    # Pass 'today', 'timedelta', and 'books' to the template context
-    return render_template('my_books.html', books=books, today=today, timedelta=timedelta)
+@app.route("/borrow_book/<int:book_id>")
+def borrow_book(book_id):
+    if 'user_id' not in session:
+        return redirect(url_for("login"))
 
+    user_id = session['user_id']  # Get user_id from the session
+
+    # Get the current date and the due date (for example, 14 days from now)
+    borrow_date = datetime.today().date()
+    due_date = borrow_date + timedelta(days=14)
+
+    # Check if the book is available (status = 'Available')
+    sql_check_availability = "SELECT availability FROM status WHERE book_id = ?"
+    status = getprocess(sql_check_availability, (book_id,))
+
+    if status and status[0]['availability'] == 'Available':
+        # Insert the borrow transaction
+        sql_insert_transaction = """
+        INSERT INTO book_transactions (user_id, book_id, borrow_date, due_date, status)
+        VALUES (?, ?, ?, ?, 'Borrowed')
+        """
+        postprocess(sql_insert_transaction, (user_id, book_id, borrow_date, due_date))
+
+        # Update the book's availability to 'Unavailable'
+        sql_update_status = "UPDATE status SET availability = 'Unavailable' WHERE book_id = ?"
+        postprocess(sql_update_status, (book_id,))
+
+        flash("You have successfully borrowed the book.")
+    else:
+        flash("This book is not available for borrowing.")
+
+    return redirect(url_for("books"))
 
 
 #VIEW READER PROFILE

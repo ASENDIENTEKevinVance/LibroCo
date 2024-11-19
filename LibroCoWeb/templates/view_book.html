@@ -69,7 +69,9 @@
                         </span>
                     </h5>
 
-                    <div class="description">{{ book['description'] }}</div>
+                    <div class="description">
+                        <p>{{ book['description'] }}</p>
+                    </div>
 
                     <div class="editbook_button_group">
                         <a href="{{ url_for('library') }}">
@@ -96,6 +98,56 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const contentItems = document.querySelectorAll(".description");
+        
+            contentItems.forEach(function (item) {
+                const content = item.querySelector("p");
+                const textContent = content.innerHTML.trim(); 
+                const maxCharacters = 155; 
+        
+                function truncateText(text, maxCharacters) {
+                    if (text.length <= maxCharacters) {
+                        return text;
+                    }
+                    return text.slice(0, maxCharacters) + "...";
+                }
+        
+                const truncatedText = truncateText(textContent, maxCharacters);
+        
+                if (textContent.length > maxCharacters) {
+                    content.innerHTML = `
+                        <span class="truncated">${truncatedText}</span>
+                        <span class="full-text" style="display: none;">${textContent}</span>
+                        <a href="#" class="read-more-link">Read More</a>
+                        <a href="#" class="read-less-link" style="display: none;">Read Less</a>
+                    `;
+        
+                    const readMoreLink = content.querySelector(".read-more-link");
+                    const readLessLink = content.querySelector(".read-less-link");
+                    const truncatedSpan = content.querySelector(".truncated");
+                    const fullTextSpan = content.querySelector(".full-text");
+        
+                    readMoreLink.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        truncatedSpan.style.display = "none";
+                        fullTextSpan.style.display = "inline";
+                        readMoreLink.style.display = "none";
+                        readLessLink.style.display = "inline";
+                    });
+        
+                    readLessLink.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        truncatedSpan.style.display = "inline";
+                        fullTextSpan.style.display = "none";
+                        readMoreLink.style.display = "inline";
+                        readLessLink.style.display = "none";
+                    });
+                }
+            });
+        });
+        </script>
 </body>
 
 </html>

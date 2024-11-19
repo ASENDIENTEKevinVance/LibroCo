@@ -120,7 +120,6 @@ body {
 
 .description {
     width: 100%;          
-    overflow-y: auto;        
     margin-top: 20px;
     font-size: 18px;        
     border: 1px solid #ccc; 
@@ -245,3 +244,18 @@ body {
     height: 400px; /* Fixed height to match the book cover size */
     object-fit: cover; /* Ensures the image covers the area and fills the space */
 }
+
+.description .read-more {
+    display: none;
+}
+
+.description .read-more-link,
+.description .read-less-link{
+    font-size: 18px;
+    display: inline;
+    color: #969696;
+    margin-top: 10px;
+}
+
+
+

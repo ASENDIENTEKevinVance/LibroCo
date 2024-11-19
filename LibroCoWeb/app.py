@@ -543,7 +543,7 @@ def auto_return_overdue_books():
         """, (book_id,))
 
 
-@app.route('/return_book/<int:book_id>', methods=['POST'])
+@app.route('/return_book/<int:book_id>', methods=['GET'])
 def return_book(book_id):
     if 'user_id' not in session:  # Check if the user is logged in
         return redirect(url_for('login'))
@@ -562,7 +562,7 @@ def return_book(book_id):
         conn.commit()
 
     # Redirect back to the 'my_books' page to refresh the list of borrowed books
-    return redirect(url_for('my_books'))
+    return render_template('my_books.html')
 
 @app.route("/decline_request", methods=["POST"])
 def decline_request():

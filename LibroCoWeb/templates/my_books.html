@@ -58,7 +58,7 @@
                                         Available
                                     {% endif %}
                                 </p>
-                                <form method="POST" action="{{ url_for('return_book', book_id=book['book_id']) }}">
+                                <form method="get" action="{{ url_for('return_book', book_id=book['book_id']) }}">
                                     <button type="submit" class="return-btn">Return</button>
                                 </form>
                             </div>

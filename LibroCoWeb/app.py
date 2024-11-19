@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, flash, url_for, ses
 from dbhelper import *
 from werkzeug.utils import secure_filename
 from flask import send_from_directory
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import os
 import dbhelper
 import random
@@ -485,7 +485,7 @@ def borrow():
 def approve_request(request_id):
     # Set due date to 30 days from today
     due_date = (datetime.now() + timedelta(days=30)).date()
-    
+
     # Update the request to "Approved" and set the due date
     postprocess("""
         UPDATE requests
@@ -493,11 +493,18 @@ def approve_request(request_id):
         WHERE request_id = ?;
     """, (due_date, request_id))
 
-    # Get the book_id from the request
-    book = getprocess("SELECT book_id FROM requests WHERE request_id = ?", (request_id,))
+    # Get the book_id and user_id from the request
+    book = getprocess("SELECT book_id, user_id FROM requests WHERE request_id = ?", (request_id,))
     if book:
         book_id = book[0]['book_id']
-        
+        user_id = book[0]['user_id']
+
+        # Insert a record into the book_transactions table to mark the book as borrowed
+        postprocess("""
+            INSERT INTO book_transactions (user_id, book_id, borrow_date, due_date, status)
+            VALUES (?, ?, ?, ?, 'Borrowed');
+        """, (user_id, book_id, datetime.now().date(), due_date))
+
         # Mark the book as unavailable
         postprocess("""
             UPDATE status
@@ -538,25 +545,24 @@ def auto_return_overdue_books():
 
 @app.route('/return_book/<int:book_id>', methods=['POST'])
 def return_book(book_id):
-    user_id = session.get('user_id')  # Ensure the user is logged in
+    if 'user_id' not in session:  # Check if the user is logged in
+        return redirect(url_for('login'))
 
-    # Update the request to "Returned"
-    postprocess("""
-        UPDATE requests
-        SET status = 'Returned'
-        WHERE book_id = ? AND user_id = ? AND status = 'Approved';
-    """, (book_id, user_id))
+    user_id = session['user_id']  # Get the logged-in user's ID
 
-    # Mark the book as "Available"
-    postprocess("""
-        UPDATE status
-        SET availability = 'Available'
-        WHERE book_id = ?;
-    """, (book_id,))
+    # Remove the book from the user's borrowed list
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
 
-    flash("Book returned successfully.")
+        # Delete the record of the book from the 'borrowed_books' table
+        cursor.execute("""
+            DELETE FROM borrowed_books 
+            WHERE user_id = ? AND book_id = ?
+        """, (user_id, book_id))
+        conn.commit()
+
+    # Redirect back to the 'my_books' page to refresh the list of borrowed books
     return redirect(url_for('my_books'))
-
 
 @app.route("/decline_request", methods=["POST"])
 def decline_request():
@@ -590,12 +596,11 @@ def requests():
     JOIN books b ON r.book_id = b.book_id
     JOIN users u ON r.user_id = u.user_id
     JOIN status s ON b.book_id = s.book_id
-    WHERE s.availability = 'Available'
+    WHERE r.status = 'Pending'  -- Only show pending requests
     """
     requests = getprocess(sql_get_requests)
 
-    return render_template("requests.html", requests=requests)  # Ensure you're rendering the correct template
-
+    return render_template("requests.html", requests=requests)
 
 #REQUESTS PAGE
 def get_requests():
@@ -882,32 +887,69 @@ def book2(book_id):
         return redirect(url_for("books"))
 
 #READER'S BORROWED BOOKS
-@app.route("/my_books")
-def my_books():
-    if 'user_id' not in session:
-        return redirect(url_for("login"))
-
-    user_id = session['user_id']  # Get user_id from the session
-
-    # Fetch books that the user has borrowed (status = 'Borrowed'), using the book_transactions table
-    sql = """
-    SELECT b.book_id, b.book_title, b.author, bt.due_date, s.availability, b.image
-    FROM books b
-    JOIN book_transactions bt ON b.book_id = bt.book_id
-    JOIN status s ON b.book_id = s.book_id
-    WHERE bt.user_id = ? AND bt.status = 'Borrowed'
+# Function to fetch borrowed books from the database
+def get_borrowed_books(user_id):
     """
-    books = getprocess(sql, (user_id,))
+    Retrieve the borrowed books for a specific user.
+    """
+    conn = sqlite3.connect('libroco.db')  # Connect to your database
+    conn.row_factory = sqlite3.Row       # Return rows as dictionaries
+    cursor = conn.cursor()
 
-    # Convert the rows into a dictionary format
-    books = [dict(book) for book in books]
+    # Query to fetch borrowed books with details
+    query = """
+    SELECT 
+        bt.book_id,
+        b.book_title,
+        b.author,
+        b.image,
+        bt.due_date
+    FROM 
+        book_transactions bt
+    JOIN 
+        books b ON bt.book_id = b.book_id
+    WHERE 
+        bt.user_id = ? AND bt.status = 'Borrowed'
+    ORDER BY 
+        bt.due_date ASC
+    """
+    cursor.execute(query, (user_id,))
+    books = cursor.fetchall()
+    conn.close()
+    return books
 
-    # Optionally, format the due_date if it's a string
-    for book in books:
-        if isinstance(book['due_date'], str):  # If it's a string, convert it to a date object
-            book['due_date'] = datetime.strptime(book['due_date'], '%Y-%m-%d').date()
+# Route to display borrowed books
+@app.route('/my_books')
+def my_books():
+    if 'user_id' not in session:  # Check if the user is logged in
+        return redirect(url_for('login'))
 
-    return render_template('my_books.html', books=books)
+    user_id = session['user_id']  # Get the logged-in user's ID
+    books = get_borrowed_books(user_id)  # Fetch borrowed books for the user
+    today = date.today()  # Current date
+    expiring_date = today + timedelta(days=3)  # Threshold for expiring books
+
+    # Parse due_date into datetime.date object for each book
+    for i, book in enumerate(books):
+        book_dict = dict(book)  # Convert the sqlite3.Row object to a dictionary
+        if isinstance(book_dict['due_date'], str):  # Check if due_date is a string
+            try:
+                # Attempt to convert string 'YYYY-MM-DD' to a datetime.date object
+                book_dict['due_date'] = datetime.strptime(book_dict['due_date'], '%Y-%m-%d').date()
+            except ValueError:
+                # Handle any unexpected date format here, if needed
+                book_dict['due_date'] = None  # Default to None if conversion fails
+
+        # Replace the original book with the updated dictionary
+        books[i] = book_dict
+
+    # Render the template with the necessary data
+    return render_template(
+        'my_books.html', 
+        books=books, 
+        today=today, 
+        expiring_date=expiring_date
+    )
 
 @app.route("/borrow_book/<int:book_id>")
 def borrow_book(book_id):

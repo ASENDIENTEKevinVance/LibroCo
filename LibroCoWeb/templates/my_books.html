@@ -5,24 +5,22 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylereaderdash.css') }}">
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/mybooksstyle.css') }}">
-    <link rel="icon" type="logo/icon" href="../static/images/favicon.ico">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mybooksstyle.css') }}">
+    <link rel="icon" type="logo/icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <title> My Books | LibroCo. </title>
 </head>
 
 <body>
     <nav>
-        <a class="navbar-brand" href="{{ url_for('library') }}"><img div class="logo" src="../static/images/logo.png" width="250" height="50" />
+        <a class="navbar-brand" href="{{ url_for('library') }}">
+            <img class="logo" src="{{ url_for('static', filename='images/logo.png') }}" width="250" height="50" />
         </a>
-
         <div class="separator"></div>
-
         <div class="navbar-links">
             <a href="{{ url_for('library') }}"> Library </a>
             <a href="{{ url_for('my_books') }}" class="active"> My Books </a>
             <a href="{{ url_for('wishlist') }}"> Wishlist </a>
         </div>
-
         <div class="navbar-right">
             <a href="{{ url_for('reader_profile') }}"> Profile </a>
             <a href="{{ url_for('logout') }}"> Log Out </a>
@@ -33,56 +31,53 @@
         <div class="header-row">
             <div class="search-container">
                 <input type="text" placeholder="Search a book, author, or etc." class="search-input">
-                <button class="search-btn"><img src="../static/images/magnify.png"></button><!-- Search icon -->
+                <button class="search-btn">
+                    <img src="{{ url_for('static', filename='images/magnify.png') }}">
+                </button>
             </div>
-        </div> 
-    
-    <div class="divider"></div> <!-- Line divider -->
+        </div>
 
-    <!-- Container for "My Books" list -->
-    <div class="container">
-        <div class="book-list">
-            {% extends "layout.html" %}
+        <div class="divider"></div> <!-- Line divider -->
 
-            {% block content %}
+        <!-- Container for "My Books" list -->
+        <div class="container">
+            <div class="book-list">
                 <h1>Your Borrowed Books</h1>
                 {% if books %}
                     <ul>
                         {% for book in books %}
-                            <li class="book-item" id="book{{ book['book_id'] }}" data-due-date="{{ book['due_date'] }}">
-                                <img src="{{ url_for('static', filename='images/' + book['image']) }}" alt="{{ book['book_title'] }} Cover" class="book-cover">
-                                <div class="book-details">
-                                    <h2 class="book-title">{{ book['book_title'] }}</h2>
-                                    <p>{{ book['author'] }}</p>
-                                    <!-- Status Section -->
-                                    <p class="status {% if book['due_date'] < today %}overdue{% elif book['due_date'] <= today + timedelta(days=3) %}expiring{% else %}available{% endif %}">
-                                        {% if book['due_date'] < today %}Overdue{% elif book['due_date'] <= today + timedelta(days=3) %}Expiring{% else %}Available{% endif %}
-                                    </p>
-                                </div>
-                                <form action="{{ url_for('return_book', book_id=book['book_id']) }}" method="post">
-                                    <button class="return" type="submit">Return</button>
+                            <div class="book">
+                                <h2>{{ book['book_title'] }}</h2>
+                                <p>{{ book['author'] }}</p>
+                                <p class="status {% if book['due_date'] < today %}overdue{% elif book['due_date'] <= expiring_date %}expiring{% else %}available{% endif %}">
+                                    {% if book['due_date'] < today %}
+                                        Overdue
+                                    {% elif book['due_date'] <= expiring_date %}
+                                        Expiring
+                                    {% else %}
+                                        Available
+                                    {% endif %}
+                                </p>
+                                <form method="POST" action="{{ url_for('return_book', book_id=book['book_id']) }}">
+                                    <button type="submit" class="return-btn">Return</button>
                                 </form>
-                            </li>
+                            </div>
                         {% endfor %}
                     </ul>
                 {% else %}
                     <p>You have no borrowed books.</p>
                 {% endif %}
-            {% endblock %}
-
+            </div>
         </div>
     </div>
-    
-	
-	<script>
-   function returnBook(bookId) {
+
+    <script>
+        function returnBook(bookId) {
             const bookElement = document.getElementById(bookId);
             if (bookElement) {
                 const bookTitle = bookElement.querySelector(".book-title").textContent;
                 alert(`You have returned ${bookTitle}`);
-
-                // Remove the book element from the DOM
-                bookElement.remove();
+                bookElement.remove(); // Remove the book element from the DOM
             } else {
                 console.log("Book element not found for id: " + bookId);
             }
@@ -99,7 +94,7 @@
                 alert("Cannot renew. Book is overdue.");
             }
         }
-</script>
+    </script>
 
 </body>
 

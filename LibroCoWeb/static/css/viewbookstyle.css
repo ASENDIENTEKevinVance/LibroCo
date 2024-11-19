@@ -139,7 +139,7 @@ body {
     justify-content: flex-end;
     width: 100%;
     gap: 1.5rem;
-    margin-top: 5em;
+    margin-top: 3em;
 }
 .back_button {
     padding: 15px 20px;
@@ -238,7 +238,7 @@ body {
     gap: 3rem;
     justify-content: flex-end;
     /* Align buttons to the right */
-    margin-top: 2rem;
+    margin-top: 3em;
 }
 
 .responsive_image {

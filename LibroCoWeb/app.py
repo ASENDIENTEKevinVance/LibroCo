@@ -790,12 +790,8 @@ def edit_profile():
         email = request.form['email']
 
         # Check if full_name is empty
-        if not full_name and not email:  # If both full_name and email are empty
-            error_message = "Full Name and Email are required."
-        elif not full_name:  # If only full_name is empty
-            error_message = "Full Name is required."
-        elif not email:  # If only email is empty
-            error_message = "Email is required."
+        if not full_name or not email:  # If full_name or email are empty
+            error_message = "Please fill in all fields correctly."
         elif not contact.isdigit():  # If contact contains non-numeric values
             error_message = "Contact number must contain only digits."
 
@@ -1126,12 +1122,8 @@ def edit_reader_profile():
         email = request.form['email']
 
         # Error handling for empty fields
-        if not full_name and not email:  # If both full_name and email are empty
-            error_message = "Full Name and Email are required."
-        elif not full_name:  # If only full_name is empty
-            error_message = "Full Name is required."
-        elif not email:  # If only email is empty
-            error_message = "Email is required."
+        if not full_name or not email:  # If full_name or email are empty
+            error_message = "Please fill in all fields correctly."
         elif not contact.isdigit():  # If contact contains non-numeric values
             error_message = "Contact number must contain only digits."
 

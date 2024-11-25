@@ -45,6 +45,7 @@
             <tbody>
                 {% for book in books %}
                 <tr>
+                    <td><img src="{{ book['image'] }}" alt="{{ book['book_title'] }}"></td>
                     <td>
                         <strong>{{ book['book_title'] }}</strong><br>
                         <small>{{ book['author'] }}</small>

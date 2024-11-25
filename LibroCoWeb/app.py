@@ -331,8 +331,23 @@ def savebook():
 #Librarian View Book
 @app.route("/lib_viewbook/<int:book_id>")
 def lib_viewbook(book_id):
-    book = get_book_by_id(book_id)  # Fetch book details using the modified function
-    return render_template("lib_viewbook.html", book=book)
+    # Fetch book details
+    sql_book = "SELECT * FROM books WHERE book_id = ?"
+    book = getprocess(sql_book, (book_id,))
+
+    if not book:  # Handle case where no book is found
+        abort(404, description="Book not found")
+
+    # Fetch availability status from the status table
+    sql_status = "SELECT availability FROM status WHERE book_id = ?"
+    status_result = getprocess(sql_status, (book_id,))
+
+    # Extract availability or set to 'Unavailable' if no result
+    availability = status_result[0]['availability'] if status_result else 'Unavailable'
+
+    # Pass data to the template
+    return render_template("lib_viewbook.html", book=book[0], availability=availability)
+
 
 # Add this function in your app.py or appropriate database utility file
 def get_book_by_id(book_id):

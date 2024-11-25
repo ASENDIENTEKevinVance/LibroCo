@@ -28,9 +28,10 @@
     </nav>
 
     <div class="main-content">
-        <h1>My Borrowed Books</h1>
+        <h2>Borrowed Books</h2>
         <div class="divider"></div> <!-- Line divider -->
 
+        <div class="block">
         {% if books %}
         <table class="books-table">
             <!-- <thead>
@@ -74,6 +75,7 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
         {% else %}
         <p>You have no borrowed books.</p>
         {% endif %}

@@ -61,35 +61,13 @@
     border-radius: 5px; /* Rounded corners */
     width: 100%; /* Allow each book item to fill the width */
 }
-
-.book-cover {
-    width: 150px; /* Set a fixed width for book covers */
-    height: auto; /* Maintain aspect ratio */
-    margin-right: 15px; /* Space between image and text */
-}
-
+/*
 .book-details {
-    flex-grow: 1; /* Allow text details to grow and fill space */
+    flex-grow: 1;  Allow text details to grow and fill space 
     display: flex;
-    flex-direction: column; /* Stack title, author, and status vertically */
+    flex-direction: column; Stack title, author, and status vertically
 }
-
-.book-title {
-    font-size: 18px; /* Title size */
-    font-weight: bold; /* Bold title */
-    margin: 0; /* Remove default margin */
-}
-
-.book-details p {
-    margin: 5px 0 0 0; /* Margin for author */
-    font-size: 15px; /* Smaller size for author */
-}
-
-.status {
-    font-size: 15px; /* Size for status */
-    font-style: italic; /* Italic for status */
-    font-weight: bold; /* Bold for status */
-}
+*/
 /*
 .return, .renew {
     display: flex;
@@ -100,13 +78,7 @@
     font-size: 18px; 
 }
 */
-.status .available {
-    color: #009E05;
-}
 
-.status .expiring {
-    color: #E3460D;
-}
 /*
 .return {
     background-color: transparent; 
@@ -202,8 +174,8 @@
 }
 
 .block img {
-    width: 200px;
-    height: 300px;
+    width: 150px; /* Set a fixed width for book covers */
+    height: auto;
     object-fit: cover;
     margin: 0 1rem 1rem 0;
 }
@@ -232,5 +204,24 @@
     background-color: transparent;
 }
 
+.book-title {
+    font-size: 18px;
+}
 
-  
+.book-author {
+    font-size: 15px;
+}
+
+#bookStatus {
+    font-size: 15px; /* Size for status */
+    font-style: italic; /* Italic for status */
+    font-weight: bold; /* Bold for status */
+}
+
+#bookStatus.available {
+    color: #009E05;
+}
+
+#bookStatus.expiring {
+    color: #E3460D;
+}

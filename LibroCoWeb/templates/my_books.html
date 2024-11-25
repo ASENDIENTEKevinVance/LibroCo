@@ -47,10 +47,10 @@
                 <tr>
                     <td><img src="{{ book['image'] }}" alt="{{ book['book_title'] }}"></td>
                     <td>
-                        <strong>{{ book['book_title'] }}</strong><br>
-                        <small>{{ book['author'] }}</small>
+                        <strong class="mybook book-title">{{ book['book_title'] }}</strong><br>
+                        <small class="mybook book-author">{{ book['author'] }}</small>
                     </td>
-                    <td class="{% if book['due_date'] < today %}overdue{% elif book['due_date'] <= expiring_date %}expiring{% else %}available{% endif %}">
+                    <td id="bookStatus" class="{% if book['due_date'] < today %}overdue{% elif book['due_date'] <= expiring_date %}expiring{% else %}available{% endif %}">
                         {% if book['due_date'] < today %}
                         Overdue
                         {% elif book['due_date'] <= expiring_date %}
@@ -59,7 +59,7 @@
                         Available
                         {% endif %}
                     </td>
-                    <td>{{ book['due_date'] }}</td>
+                    <td class="mybook due-date">{{ book['due_date'] }}</td>
                     <td>
                         <form action="{{ url_for('return_book', book_id=book['book_id']) }}" method="post">
                             <button class="action-btn return-btn">Return</button>

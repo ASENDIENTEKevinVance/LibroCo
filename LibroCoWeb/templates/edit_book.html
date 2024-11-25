@@ -60,11 +60,11 @@
 
     <div class="addbook_container">
         <!-- Book image section -->
-        <div class="book_image">
-            <div class="overlay_wrapper">
+        <div class="edit-book book-image">
+            <div class="overlay_wrapper2">
                 <label for="image_upload">
-                    <div class="image_overlay">
-                        <img src="{{ url_for('static', filename='images/upload_photo.png') }}" class="upload" />
+                    <div class="image_overlay2">
+                        <img src="{{ url_for('static', filename='images/upload_photo.png') }}" class="upload2" />
                     </div>
                     <img id="image" src="{{ url_for('static', filename='images/' + book['image']) }}" alt="Book Image">
                 </label>

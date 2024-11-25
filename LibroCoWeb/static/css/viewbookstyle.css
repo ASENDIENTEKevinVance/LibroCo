@@ -118,20 +118,26 @@ body {
     color: #009E05;
 }
 
-.description {
+.description,
+.desc {
     width: 100%;          
     margin-top: 20px;
+    margin-left: 5px;
     font-size: 18px;        
     border: 1px solid #ccc; 
     border-radius: 4px;  
     box-sizing: border-box;
     border: none;
     scrollbar-width: none;
+    max-height: 270px;
+    overflow-y: auto;   /* Enable vertical scrolling */
     text-align: justify;
 }
-.description::-webkit-scrollbar {
+.description::-webkit-scrollbar,
+.desc::-webkit-scrollbar {
     display: none;
 }
+
 .editbook_button_group {
     display: flex;
     justify-content: flex-end;

@@ -134,7 +134,7 @@ def create_account():
                 session['error_message'] = "Failed to retrieve new user details."
                 return redirect(url_for("create_account"))
         else:
-            session['error_message'] = "An error occurred while creating your account."
+            session['error_message'] = "Please provide a unique password."
             return redirect(url_for("create_account"))
 
     return render_template("create_acc.html", error_message=error_message)
@@ -1123,7 +1123,7 @@ def edit_reader_profile():
         full_name = request.form['full_name']
         contact = request.form['contact']
         email = request.form['email']
-        
+
         if "@" not in email or "." not in email.split("@")[-1]:
             error_message = "Please enter a valid email address."
         # Error handling for empty fields

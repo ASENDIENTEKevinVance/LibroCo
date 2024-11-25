@@ -789,6 +789,9 @@ def edit_profile():
         contact = request.form['contact']
         email = request.form['email']
 
+        if "@" not in email or "." not in email.split("@")[-1]:
+            error_message = "Please enter a valid email address."
+
         # Check if full_name is empty
         if not full_name or not email:  # If full_name or email are empty
             error_message = "Please fill in all fields correctly."
@@ -1120,7 +1123,9 @@ def edit_reader_profile():
         full_name = request.form['full_name']
         contact = request.form['contact']
         email = request.form['email']
-
+        
+        if "@" not in email or "." not in email.split("@")[-1]:
+            error_message = "Please enter a valid email address."
         # Error handling for empty fields
         if not full_name or not email:  # If full_name or email are empty
             error_message = "Please fill in all fields correctly."

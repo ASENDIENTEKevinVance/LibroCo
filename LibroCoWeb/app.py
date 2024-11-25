@@ -336,7 +336,7 @@ def lib_viewbook(book_id):
     book = getprocess(sql_book, (book_id,))
 
     if not book:  # Handle case where no book is found
-        abort(404, description="Book not found")
+        os.abort(404, description="Book not found")
 
     # Fetch availability status from the status table
     sql_status = "SELECT availability FROM status WHERE book_id = ?"

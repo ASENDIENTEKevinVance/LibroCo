@@ -28,73 +28,55 @@
     </nav>
 
     <div class="main-content">
-        <div class="header-row">
-            <div class="search-container">
-                <input type="text" placeholder="Search a book, author, or etc." class="search-input">
-                <button class="search-btn">
-                    <img src="{{ url_for('static', filename='images/magnify.png') }}">
-                </button>
-            </div>
-        </div>
-
+        <h1>My Borrowed Books</h1>
         <div class="divider"></div> <!-- Line divider -->
 
-        <!-- Container for "My Books" list -->
-        <div class="container">
-            <div class="book-list">
-                <h1>Your Borrowed Books</h1>
-                {% if books %}
-                    <ul>
-                        {% for book in books %}
-                            <div class="book">
-                                <h2>{{ book['book_title'] }}</h2>
-                                <p>{{ book['author'] }}</p>
-                                <p class="status {% if book['due_date'] < today %}overdue{% elif book['due_date'] <= expiring_date %}expiring{% else %}available{% endif %}">
-                                    {% if book['due_date'] < today %}
-                                        Overdue
-                                    {% elif book['due_date'] <= expiring_date %}
-                                        Expiring
-                                    {% else %}
-                                        Available
-                                    {% endif %}
-                                </p>
-                                <form method="get" action="{{ url_for('return_book', book_id=book['book_id']) }}">
-                                    <button type="submit" class="return-btn">Return</button>
-                                </form>
-                            </div>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>You have no borrowed books.</p>
-                {% endif %}
-            </div>
-        </div>
+        {% if books %}
+        <table class="books-table">
+            <!-- <thead>
+                <tr>
+                    <th>Book Title & Author</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    <th>Return</th>
+                    <th>Renew</th>
+                </tr>
+            </thead> -->
+            <tbody>
+                {% for book in books %}
+                <tr>
+                    <td>
+                        <strong>{{ book['book_title'] }}</strong><br>
+                        <small>{{ book['author'] }}</small>
+                    </td>
+                    <td class="{% if book['due_date'] < today %}overdue{% elif book['due_date'] <= expiring_date %}expiring{% else %}available{% endif %}">
+                        {% if book['due_date'] < today %}
+                        Overdue
+                        {% elif book['due_date'] <= expiring_date %}
+                        Expiring
+                        {% else %}
+                        Available
+                        {% endif %}
+                    </td>
+                    <td>{{ book['due_date'] }}</td>
+                    <td>
+                        <form action="{{ url_for('return_book', book_id=book['book_id']) }}" method="post">
+                            <button class="action-btn return-btn">Return</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form action="{{ url_for('renew_book', book_id=book['book_id']) }}" method="post">
+                            <button class="action-btn renew-btn">Renew</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>You have no borrowed books.</p>
+        {% endif %}
     </div>
-
-    <script>
-        function returnBook(bookId) {
-            const bookElement = document.getElementById(bookId);
-            if (bookElement) {
-                const bookTitle = bookElement.querySelector(".book-title").textContent;
-                alert(`You have returned ${bookTitle}`);
-                bookElement.remove(); // Remove the book element from the DOM
-            } else {
-                console.log("Book element not found for id: " + bookId);
-            }
-        }
-
-        function renewBook(bookId) {
-            const bookElement = document.getElementById(bookId);
-            const dueDate = new Date(bookElement.dataset.dueDate);
-            const today = new Date();
-
-            if (dueDate > today) {
-                alert(`The book '${bookElement.querySelector(".book-title").textContent}' has been renewed.`);
-            } else {
-                alert("Cannot renew. Book is overdue.");
-            }
-        }
-    </script>
 
 </body>
 

@@ -543,26 +543,42 @@ def auto_return_overdue_books():
         """, (book_id,))
 
 
-@app.route('/return_book/<int:book_id>', methods=['GET'])
+@app.route("/return_book/<int:book_id>", methods=["POST"])
 def return_book(book_id):
-    if 'user_id' not in session:  # Check if the user is logged in
-        return redirect(url_for('login'))
+    if 'user_id' not in session:
+        return redirect(url_for("login"))
 
-    user_id = session['user_id']  # Get the logged-in user's ID
+    # Update the status table to make the book available
+    sql_update_status = "UPDATE status SET availability = 'Available' WHERE book_id = ?"
+    postprocess(sql_update_status, (book_id,))
 
-    # Remove the book from the user's borrowed list
-    with sqlite3.connect('database.db') as conn:
-        cursor = conn.cursor()
+    # Mark the transaction as returned
+    sql_update_transaction = """
+    UPDATE book_transactions
+    SET status = 'Returned', return_date = ?
+    WHERE book_id = ? AND user_id = ? AND status = 'Borrowed'
+    """
+    postprocess(sql_update_transaction, (datetime.now().date(), book_id, session['user_id']))
 
-        # Delete the record of the book from the 'borrowed_books' table
-        cursor.execute("""
-            DELETE FROM borrowed_books 
-            WHERE user_id = ? AND book_id = ?
-        """, (user_id, book_id))
-        conn.commit()
+    flash("You have successfully returned the book.")
+    return redirect(url_for("my_books"))
 
-    # Redirect back to the 'my_books' page to refresh the list of borrowed books
-    return render_template('my_books.html')
+@app.route("/renew_book/<int:book_id>", methods=["POST"])
+def renew_book(book_id):
+    if 'user_id' not in session:
+        return redirect(url_for("login"))
+
+    # Extend the due date by 7 days
+    sql_update_due_date = """
+    UPDATE book_transactions
+    SET due_date = DATE(due_date, '+7 days')
+    WHERE book_id = ? AND user_id = ? AND status = 'Borrowed'
+    """
+    postprocess(sql_update_due_date, (book_id, session['user_id']))
+
+    flash("You have successfully renewed the book for an additional 7 days.")
+    return redirect(url_for("my_books"))
+
 
 @app.route("/decline_request", methods=["POST"])
 def decline_request():

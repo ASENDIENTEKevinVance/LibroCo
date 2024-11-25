@@ -7,6 +7,21 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/viewbookstyle.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <title>View Book | LibroCo.</title>
+    <style>
+        /* Custom styling for the availability status */
+        .status.available {
+            color: green;
+        }
+
+        .status.unavailable {
+            color: red;
+        }
+
+        .borrow_button.disabled {
+            background-color: grey;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
     <nav>
@@ -48,7 +63,11 @@
                     <h5 class="author"><strong>Author:</strong> {{ book['author'] }}</h5>
                     <h5 class="publication_year"><strong>Year:</strong> {{ book['publication_year'] }}</h5>
                     <h5 class="genre">Genre: <span class="genre_details">{{ book['genre'] }}</span></h5>
-                    <h5 class="availability">Status: <span class="status">{{ book['availability'] }}</span></h5>
+                    <h5 class="availability">Status: 
+                        <span class="status {{ 'available' if availability == 'Available' else 'unavailable' }}">
+                            {{ availability }}
+                        </span>
+                    </h5>
                     <p class="desc">{{ book['description'] }}</p>
     
                     <div class="view_book_button">

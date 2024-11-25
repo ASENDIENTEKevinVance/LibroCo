@@ -196,4 +196,16 @@
 
 .block {
     display: grid;
+    padding: 1rem;
+    margin: 0 0 1rem 0;
 }
+
+.block img {
+    width: 200px;
+    height: 300px;
+    object-fit: cover;
+    margin: 0 1rem 0 0;
+}
+
+
+  

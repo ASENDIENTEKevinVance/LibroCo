@@ -269,32 +269,38 @@ def books() -> None:
 #ADD BOOK PAGE
 @app.route("/addbook")
 def addbook():
-    return render_template("addbook.html")
+    # Retrieve the error message from the session
+    error_message = session.pop('error_message', None)
+    return render_template("addbook.html", error_message=error_message)
 
-#SAVE BOOK
 @app.route("/savebook", methods=["POST"])
 def savebook():
-    # Ensure that the librarian is logged in
     if 'user_id' not in session or session.get('user_id') != 1:
-        flash("You must be logged in as a librarian to add books.")
+        session['error_message'] = "You must be logged in as a librarian to add books."
         return redirect(url_for("login"))
 
-    # Get the book details from the form
+    # Get form data
     book_title = request.form.get("book_title")
     author = request.form.get("author")
     publication_year = request.form.get("publication_year")
     genre = request.form.get("genre")
     description = request.form.get("description")
-    
+    file = request.files.get("image_upload")
+
+    # Validate all fields
+    if not (book_title and author and publication_year and genre and description and file):
+        session['error_message'] = "Please complete all book details."
+        return redirect(url_for("addbook"))
+
     # Handle the image upload
-    file = request.files['image_upload']
-    if file:
+    try:
         filename = os.path.join(uploadfolder, file.filename)
         file.save(filename)
-    else:
-        filename = 'static/images/blank_image.png'
+    except Exception as e:
+        session['error_message'] = "Error uploading image. Please try again."
+        return redirect(url_for("addbook"))
 
-    # Insert the book into the "books" table
+    # Insert the book into the database
     sql_insert_book = """
     INSERT INTO books (book_title, author, publication_year, genre, description, image)
     VALUES (?, ?, ?, ?, ?, ?)
@@ -302,30 +308,25 @@ def savebook():
     result = postprocess(sql_insert_book, (book_title, author, publication_year, genre, description, filename))
 
     if result:
-        # Retrieve the latest book_id from the books table
-        sql_get_last_book_id = "SELECT MAX(book_id) FROM books"
+        # Retrieve the last book ID and insert into the status table
+        sql_get_last_book_id = "SELECT MAX(book_id) AS last_id FROM books"
         last_book_id_result = getprocess(sql_get_last_book_id)
-
         if last_book_id_result:
-            last_book_id = last_book_id_result[0]["MAX(book_id)"]
-            new_book_id = last_book_id  # Increment to get the new book_id
-
-            # Insert the status for the new book in the "status" table (set availability to 'Available')
+            last_book_id = last_book_id_result[0]["last_id"]
             sql_insert_status = """
             INSERT INTO status (book_id, availability)
             VALUES (?, ?)
             """
-            postprocess(sql_insert_status, (new_book_id, 'Available'))
-
-            flash(f"The book '{book_title}' has been added successfully and is available for borrowing.")
-            return redirect(url_for("lib_viewbook", book_id=new_book_id))  # Redirect to the library or other page as needed
+            postprocess(sql_insert_status, (last_book_id, 'Available'))
+            session.pop('error_message', None)  # Clear any existing error messages
+            flash(f"The book '{book_title}' has been added successfully.")
+            return redirect(url_for("lib_viewbook", book_id=last_book_id))
         else:
-            flash("Failed to retrieve the last book_id.")
-            return redirect(url_for("add_book"))  # Redirect to the add book page if there was an error
+            session['error_message'] = "Error retrieving book ID after saving."
     else:
-        flash("An error occurred while adding the book.")
-        return redirect(url_for("add_book"))  # Redirect to the add book page if there was an error
+        session['error_message'] = "An error occurred while adding the book."
 
+    return redirect(url_for("addbook"))
 
 
 #Librarian View Book
@@ -391,20 +392,29 @@ def show_book(book_id):
 def edit_book(book_id):
     if request.method == 'POST':
         # Get form data
-        book_title = request.form['book_title']
-        author = request.form['author']
-        publication_year = request.form['publication_year']
-        genre = request.form['genre']
-        description = request.form['description']
+        book_title = request.form.get('book_title')
+        author = request.form.get('author')
+        publication_year = request.form.get('publication_year')
+        genre = request.form.get('genre')
+        description = request.form.get('description')
+
+        # Check if all fields are completed
+        if not (book_title and author and publication_year and genre and description):
+            session['error_message'] = "Please complete all book details."
+            return redirect(url_for('edit_book', book_id=book_id))
 
         # Check if a new image file is uploaded
-        image_upload = request.files['image_upload']
+        image_upload = request.files.get('image_upload')
         image_path = None
         if image_upload and image_upload.filename != '':
             # Generate a unique filename using the book_id to avoid filename conflicts
             image_filename = f"{book_id}_{image_upload.filename}"
             image_path = os.path.join(uploadfolder, image_filename)
-            image_upload.save(image_path)
+            try:
+                image_upload.save(image_path)
+            except Exception:
+                session['error_message'] = "Error uploading image. Please try again."
+                return redirect(url_for('edit_book', book_id=book_id))
 
         # If no new image is uploaded, keep the current image path (if exists)
         if not image_path:
@@ -421,17 +431,21 @@ def edit_book(book_id):
 
         # Update the book in the database
         if postprocess(sql, params):
+            session.pop('error_message', None)  # Clear any existing error messages
             flash("Book updated successfully")
             return redirect(url_for('view_book_details', book_id=book_id))
-        flash("Error updating book")
+        session['error_message'] = "Error updating book"
         return redirect(url_for('edit_book', book_id=book_id))
 
     # Show edit form if GET request
     book = getprocess("SELECT * FROM books WHERE book_id = ?", (book_id,))
     if book:
-        return render_template('edit_book.html', book=dict(book[0]))
+        # Retrieve error message from session if it exists
+        error_message = session.pop('error_message', None)
+        return render_template('edit_book.html', book=dict(book[0]), error_message=error_message)
     flash("Book not found")
     return redirect(url_for('books'))
+
 
 # Delete Book
 @app.route('/delete_book/<int:book_id>', methods=['GET'])
@@ -711,6 +725,7 @@ def reader_history(user_id):
     history = getprocess(sql_history, (user_id,))
     book_titles = [h['book_title'] for h in history]
     return {"history": book_titles}
+    
 
 #EDIT READER'S PROFILE
 @app.route("/edit_reader")
@@ -767,10 +782,31 @@ def edit_profile():
     if not os.path.exists(uploadfolder):
         os.makedirs(uploadfolder)
 
+    error_message = ""
+
     if request.method == "POST":
         full_name = request.form['full_name']
         contact = request.form['contact']
         email = request.form['email']
+
+        # Check if full_name is empty
+        if not full_name and not email:  # If both full_name and email are empty
+            error_message = "Full Name and Email are required."
+        elif not full_name:  # If only full_name is empty
+            error_message = "Full Name is required."
+        elif not email:  # If only email is empty
+            error_message = "Email is required."
+        elif not contact.isdigit():  # If contact contains non-numeric values
+            error_message = "Contact number must contain only digits."
+
+        # If any error message is set, return with the error
+        if error_message:
+            return render_template("editprofile.html", error_message=error_message, user={
+                "full_name": full_name,
+                "contact": contact,
+                "email": email,
+                "user_image": request.form.get('current_image', 'static/images/default_profile.png')
+            })
 
         file = request.files.get('user_image')
         if file:
@@ -835,6 +871,7 @@ def edit_profile():
     else:
         flash("Error loading profile.")
         return redirect(url_for("profile"))
+
 
 #LOGOUT
 @app.route("/logout", methods=['GET'])
@@ -1072,6 +1109,7 @@ def edit_reader_profile():
 
     user_id = session['user_id']
 
+    # Ensure only the reader can edit their profile
     if user_id == 1:
         flash("Librarians cannot edit reader profiles.")
         return redirect(url_for("reader_profile"))
@@ -1080,56 +1118,70 @@ def edit_reader_profile():
     if not os.path.exists(uploadfolder):
         os.makedirs(uploadfolder)
 
+    error_message = None  # Initialize the error message variable
+
     if request.method == "POST":
         full_name = request.form['full_name']
         contact = request.form['contact']
         email = request.form['email']
-        
-        file = request.files.get('user_image')
-        if file:
-            filename = os.path.join(uploadfolder, file.filename)
-            try:
-                file.save(filename)
-                filename = 'images/' + file.filename  # Save only the relative path
-            except Exception as e:
-                flash(f"Error saving the image: {str(e)}")
-                filename = 'images/default_profile.png'
-        else:
-            filename = request.form.get('current_image', 'images/default_profile.png')
 
-                # Store just the filename in the database, not the full path
-        relative_path = filename
+        # Error handling for empty fields
+        if not full_name and not email:  # If both full_name and email are empty
+            error_message = "Full Name and Email are required."
+        elif not full_name:  # If only full_name is empty
+            error_message = "Full Name is required."
+        elif not email:  # If only email is empty
+            error_message = "Email is required."
+        elif not contact.isdigit():  # If contact contains non-numeric values
+            error_message = "Contact number must contain only digits."
 
-        sql_update_user = """
-            UPDATE users
-            SET user_name = ?, user_contact = ?, user_email = ?
-            WHERE user_id = ?
-        """
-        params = (full_name, contact, email, user_id)
-        result = postprocess(sql_update_user, params)
+        if error_message is None:  # Only proceed if there are no errors
+            file = request.files.get('user_image')
+            if file:
+                filename = os.path.join(uploadfolder, file.filename)
+                try:
+                    file.save(filename)
+                    filename = 'images/' + file.filename  # Save only the relative path
+                except Exception as e:
+                    flash(f"Error saving the image: {str(e)}")
+                    filename = 'images/default_profile.png'
+            else:
+                filename = request.form.get('current_image', 'images/default_profile.png')
 
-        check_image_sql = "SELECT * FROM profileimages WHERE user_id = ?"
-        existing_image = getprocess(check_image_sql, (user_id,))
-        if existing_image:
-            sql_update_image = """
-                UPDATE profileimages
-                SET user_image = ?
+            relative_path = filename
+
+            # Update user profile information
+            sql_update_user = """
+                UPDATE users
+                SET user_name = ?, user_contact = ?, user_email = ?
                 WHERE user_id = ?
             """
-            postprocess(sql_update_image, (relative_path, user_id))
-        else:
-            sql_insert_image = """
-                INSERT INTO profileimages (user_id, user_image)
-                VALUES (?, ?)
-            """
-            postprocess(sql_insert_image, (user_id, relative_path))
+            params = (full_name, contact, email, user_id)
+            result = postprocess(sql_update_user, params)
 
-        if result:
-            flash("Profile updated successfully.")
-        else:
-            flash("An error occurred while updating the profile.")
+            # Update profile image if changed, otherwise insert a new one
+            check_image_sql = "SELECT * FROM profileimages WHERE user_id = ?"
+            existing_image = getprocess(check_image_sql, (user_id,))
+            if existing_image:
+                sql_update_image = """
+                    UPDATE profileimages
+                    SET user_image = ?
+                    WHERE user_id = ?
+                """
+                postprocess(sql_update_image, (relative_path, user_id))
+            else:
+                sql_insert_image = """
+                    INSERT INTO profileimages (user_id, user_image)
+                    VALUES (?, ?)
+                """
+                postprocess(sql_insert_image, (user_id, relative_path))
 
-        return redirect(url_for("reader_profile"))
+            if result:
+                flash("Profile updated successfully.")
+            else:
+                flash("An error occurred while updating the profile.")
+
+            return redirect(url_for("reader_profile"))
 
     sql = """
         SELECT u.user_name, u.user_email, u.user_contact, p.user_image
@@ -1147,7 +1199,7 @@ def edit_reader_profile():
             "contact": user["user_contact"],
             "user_image": user["user_image"] if user["user_image"] else 'static/images/default_profile.png'
         }
-        return render_template("reader-editprofile.html", user=user_data)
+        return render_template("reader-editprofile.html", user=user_data, error_message=error_message)
     else:
         flash("Error loading profile.")
         return redirect(url_for("reader_profile"))

@@ -51,10 +51,17 @@
         <div class="header-row">
             <div class="viewbook_container">
                 <div class="book_image">
-                    <div class="overlay_wrapper">
-                        <img src="{{ url_for('static', filename='images/book_image.png') }}" class="responsive_image" alt="Book Image">
-                    </div>
-                </div>
+					{% if book['image'] %}
+						<!-- Display the book image -->
+						<img 
+							src="/{{ book['image'].replace('\\', '/') }}" 
+							alt="{{ book['book_title'] }}" 
+							width="300">
+					{% else %}
+						<!-- Fallback if no image is available -->
+						<img src="{{ url_for('static', filename='images/default_image.jpg') }}" alt="No Image Available" width="300">
+					{% endif %}
+				</div>
 
                 <div class="viewbook_details">
                     <h3 class="book_title">{{ book['book_title'] }}</h3>

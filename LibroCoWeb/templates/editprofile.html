@@ -8,6 +8,22 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/editprofilestyles.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <title> Edit Profile | LibroCo. </title>
+    <style>
+        .error-message {
+            margin-top: 5px;
+            text-align: left;
+            color: #8e0101;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-icon {
+            margin-right: 5px;
+            display: inline;
+            width: 16px;
+            height: 16px;
+        }
+    </style>
 </head>
 
 <body>
@@ -53,13 +69,20 @@
             <input type="text" id="full_name" name="full_name" value="{{ user['full_name'] }}">
 
             <label for="contact">Contact</label>
-            <input type="text" id="contact" name="contact" value="{{ user['contact'] }}">
+            <input type="tel" id="contact" name="contact" value="{{ user['contact'] }}" pattern="\d*" title="Only numbers are allowed">
 
             <label for="email">Email</label>
             <input type="email" id="email" name="email" value="{{ user['email'] }}">
 
             <input type="file" name="user_image" id="user_image" style="display:none;" onchange="readURL(this)">
             <input type="hidden" name="current_image" value="{{ user['user_image'] }}">
+
+            {% if error_message %}
+                <div class="error-message" id="errorMessage" style="display: block;">
+                    <img src="{{ url_for('static', filename='images/error_icon.png') }}" alt="Error icon" class="error-icon">
+                    <span id="errorText" class="error-text">{{ error_message }}</span>
+                </div>
+            {% endif %}
 
             <!-- Buttons -->
             <div class="button_group">

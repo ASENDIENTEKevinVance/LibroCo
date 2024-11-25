@@ -18,6 +18,21 @@
             padding-right: 20px;
             margin-left: 20px;
         }
+        
+        .error-message {
+            margin-top: 5px;
+            text-align: left;
+            color: #8e0101;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-icon {
+            margin-right: 5px;
+            display: inline;
+            width: 16px;
+            height: 16px;
+        }
     </style>
 </head>
 
@@ -87,6 +102,13 @@
                 <textarea id="description" name="description" rows="4">{{ book['description'] }}</textarea>
 
                 <input type="file" name="image_upload" id="image_upload" style="display:none;" onchange="readURL(this)">
+
+                {% if error_message %}
+                <div class="error-message" id="errorMessage" style="display: block;">
+                    <img src="{{ url_for('static', filename='images/error_icon.png') }}" alt="Error icon" class="error-icon">
+                    <span id="errorText" class="error-text">{{ error_message }}</span>
+                </div>
+                {% endif %}
 
                 <div class="addbook_button_group">
                     <a href="{{ url_for('books') }}">

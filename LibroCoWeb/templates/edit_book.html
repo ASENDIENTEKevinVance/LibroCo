@@ -63,10 +63,10 @@
         <div class="edit-book book-image">
             <div class="overlay_wrapper2">
                 <label for="image_upload">
-                    <div class="image_overlay2">
-                        <img src="{{ url_for('static', filename='images/upload_photo.png') }}" class="upload2" />
+                    <div class="image_overlay">
+                        <img src="{{ url_for('static', filename='images/upload_photo.png') }}">
                     </div>
-                    <img id="image" src="{{ url_for('static', filename='images/' + book['image']) }}" alt="Book Image">
+                    <img id="image" style="height: 25.5rem; width: 18rem;">
                 </label>
             </div>
         </div>

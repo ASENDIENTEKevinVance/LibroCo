@@ -515,18 +515,18 @@ def approve_request(request_id):
     # Set due date to 30 days from today
     due_date = (datetime.now() + timedelta(days=30)).date()
 
-    # Update the request to "Approved" and set the due date
-    postprocess("""
-        UPDATE requests
-        SET status = 'Approved', due_date = ?
-        WHERE request_id = ?;
-    """, (due_date, request_id))
-
     # Get the book_id and user_id from the request
     book = getprocess("SELECT book_id, user_id FROM requests WHERE request_id = ?", (request_id,))
     if book:
         book_id = book[0]['book_id']
         user_id = book[0]['user_id']
+
+        # Update the request to "Approved" and set the due date
+        postprocess("""
+            UPDATE requests
+            SET status = 'Approved', due_date = ?
+            WHERE request_id = ?;
+        """, (due_date, request_id))
 
         # Insert a record into the book_transactions table to mark the book as borrowed
         postprocess("""
@@ -541,8 +541,15 @@ def approve_request(request_id):
             WHERE book_id = ?;
         """, (book_id,))
 
+        # Remove all other requests for the same book
+        postprocess("""
+            DELETE FROM requests
+            WHERE book_id = ? AND status = 'Pending';
+        """, (book_id,))
+
     flash("Borrow request approved successfully.")
     return redirect(url_for('requests'))
+
 
 def auto_return_overdue_books():
     today = datetime.now().date()

@@ -8,6 +8,11 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/librarystyles.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <title> Library | LibroCo </title>
+    <!-- <style>
+        .book-container {
+            width: 92rem;
+        }
+    </style> -->
 </head>
 <body>
     <nav>
@@ -38,7 +43,7 @@
 
         <div class="book-container">
             {% for book in request %}
-                <div class="card">
+                <div class="cardd">
                     <input type="checkbox" class="select-checkbox" value="{{ book['book_id'] }}">
                     <a href="{{ url_for('view_book', book_id=book['book_id']) }}">
                         <img src="{{ book['image'] }}" class="card-img-top" alt="{{ book['book_title'] }}">

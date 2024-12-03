@@ -9,6 +9,8 @@ import random
 import sqlite3
 import string
 import logging
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -579,6 +581,17 @@ def auto_return_overdue_books():
         """, (book_id,))
 
 
+# Initialize the scheduler
+scheduler = BackgroundScheduler()
+
+# Schedule the auto_return_overdue_books function to run daily at midnight
+scheduler.add_job(auto_return_overdue_books, 'cron', hour=0, minute=0) # type: ignore
+
+# Start the scheduler
+scheduler.start()
+
+atexit.register(lambda: scheduler.shutdown())
+
 @app.route("/return_book/<int:book_id>", methods=["POST"])
 def return_book(book_id):
     if 'user_id' not in session:
@@ -640,6 +653,9 @@ def requests():
     if 'user_id' not in session or session.get('user_id') != 1:
         flash("You must be logged in as a librarian to view requests.")
         return redirect(url_for("login"))
+
+    # Automatically return overdue books
+    auto_return_overdue_books()
 
     # Get all pending borrow requests
     sql_get_requests = """

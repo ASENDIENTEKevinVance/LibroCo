@@ -188,3 +188,11 @@
 #bookStatus.expiring {
     color: #E3460D;
 }
+
+.image_container {
+width: 15%;
+}
+
+.detail_container {
+    width: 25%
+}

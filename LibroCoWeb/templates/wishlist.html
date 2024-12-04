@@ -7,27 +7,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/wishliststyle.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/librarystyles.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
-    <title>Wishlist | LibroCo</title>
-    <style>
-        .cardd {
-            position: relative;
-            cursor: pointer;
-        }
-        .select-checkbox {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 20px;
-            height: 20px;
-            display: none; /* Hidden initially */
-        }
-        .cardd.select-mode .select-checkbox {
-            display: block; /* Show only in select mode */
-        }
-        .cardd.selected {
-            outline: 3px solid #007bff; /* Highlight selected card */
-        }
-    </style>
+    <title> Wishlist | LibroCo </title>
 </head>
 <body>
     <nav>
@@ -53,16 +33,16 @@
                 <button id="delete-button" class="delete-button" disabled>Delete</button>
             </div>
         </div>
-        
+
         <div class="divider" style="margin-bottom: 2%;"></div>
 
         <div class="book-containerr">
             {% for book in request %}
                 <div class="cardd" data-book-id="{{ book['book_id'] }}">
-                    <input type="checkbox" class="select-checkbox" value="{{ book['book_id'] }}">
-                    <!-- <a href="{{ url_for('view_book', book_id=book['book_id']) }}"> -->
+                    <input type="checkbox" class="select-checkbox" value="{{ book['book_id'] }}" style="display: none;">
+                    <a href="{{ url_for('view_book', book_id=book['book_id']) }}" class="view-link">
                         <img src="{{ book['image'] }}" class="card-img-top" alt="{{ book['book_title'] }}">
-                    <!-- </a> -->
+                    </a>
                     <div class="card-body">
                         <h5 class="card-title">{{ book['book_title'] }}</h5>
                         <p class="card-text">{{ book['author'] }}</p>
@@ -76,6 +56,7 @@
         document.addEventListener("DOMContentLoaded", function() {
             const selectButton = document.getElementById("select-button");
             const deleteButton = document.getElementById("delete-button");
+            const checkboxes = document.querySelectorAll(".select-checkbox");
             const cards = document.querySelectorAll(".cardd");
 
             let selectMode = false;
@@ -83,28 +64,47 @@
             // Toggle select mode
             selectButton.addEventListener("click", () => {
                 selectMode = !selectMode;
+                checkboxes.forEach(checkbox => {
+                    checkbox.style.display = selectMode ? "block" : "none";
+                });
+                deleteButton.disabled = !selectMode;
+
+                // Disable/enable book links
                 cards.forEach(card => {
-                    card.classList.toggle("select-mode", selectMode);
-                });
-                deleteButton.disabled = !selectMode; // Enable/Disable delete button
-            });
-
-            // Handle card click for selection
-            cards.forEach(card => {
-                card.addEventListener("click", () => {
-                    if (!selectMode) return; // Only allow selection in select mode
-
-                    const checkbox = card.querySelector(".select-checkbox");
-                    checkbox.checked = !checkbox.checked; // Toggle checkbox
-                    card.classList.toggle("selected", checkbox.checked); // Highlight card
+                    const link = card.querySelector(".view-link");
+                    if (selectMode) {
+                        link.style.pointerEvents = "none";
+                        card.addEventListener("click", selectCard);
+                    } else {
+                        link.style.pointerEvents = "auto";
+                        card.removeEventListener("click", selectCard);
+                    }
                 });
             });
+
+            // Enable delete button only if a checkbox is selected
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener("change", () => {
+                    deleteButton.disabled = ![...checkboxes].some(cb => cb.checked);
+                });
+            });
+
+            // Handle book selection (click on the entire card in select mode)
+            function selectCard(event) {
+                const card = event.currentTarget;
+                const checkbox = card.querySelector(".select-checkbox");
+                checkbox.checked = !checkbox.checked;
+
+                // Trigger change event for enabling delete button
+                const changeEvent = new Event("change");
+                checkbox.dispatchEvent(changeEvent);
+            }
 
             // Handle delete button click
             deleteButton.addEventListener("click", () => {
-                const selectedBooks = [...cards]
-                    .filter(card => card.querySelector(".select-checkbox").checked)
-                    .map(card => card.dataset.bookId);
+                const selectedBooks = [...checkboxes]
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
 
                 if (selectedBooks.length > 0) {
                     fetch("/remove_selected_books", {
@@ -117,12 +117,6 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            // Remove selected books from the DOM
-                            selectedBooks.forEach(bookId => {
-                                const card = document.querySelector(`[data-book-id="${bookId}"]`);
-                                if (card) card.parentNode.removeChild(card);
-                            });
-
                             // Refresh the page to reflect changes
                             window.location.reload();
                         } else {
@@ -132,6 +126,6 @@
                 }
             });
         });
-    </script>
+    </script>    
 </body>
 </html>

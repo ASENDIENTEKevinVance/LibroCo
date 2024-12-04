@@ -701,35 +701,44 @@ def readers():
     all_users = getall_records("users")
     readers = [user for user in all_users if user["user_id"] != 1]
 
+    # Deduplicate readers by name
+    seen_names = set()
     readers_with_history = []
+
     for reader in readers:
-        reader_id = reader['user_id']
+        if reader["user_name"] not in seen_names:
+            seen_names.add(reader["user_name"])  # Fix the missing parenthesis here
+            
+            reader_id = reader['user_id']
 
-        # Fetch book history
-        sql_history = """
-            SELECT books.book_title 
-            FROM requests
-            JOIN books ON requests.book_id = books.book_id
-            WHERE requests.user_id = ?
-        """
-        history = getprocess(sql_history, (reader_id,))
+            # Fetch book history
+            sql_history = """
+                SELECT books.book_title 
+                FROM requests
+                JOIN books ON requests.book_id = books.book_id
+                WHERE requests.user_id = ?
+            """
+            history = getprocess(sql_history, (reader_id,))
 
-        # Fetch user image
-        sql_image = """
-            SELECT user_image
-            FROM profileimages
-            WHERE user_id = ?
-        """
-        user_image = getprocess(sql_image, (reader_id,))
-        image_path = f"static/{user_image[0]['user_image']}" if user_image else url_for('static', filename='images/default_profile.png')
+            # Remove duplicates by converting to a set, then back to a list
+            unique_books = list(set(h['book_title'] for h in history))
 
-        readers_with_history.append({
-            "name": reader["user_name"],
-            "contact": reader["user_contact"] or "",
-            "email": reader["user_email"],
-            "history": [h['book_title'] for h in history],
-            "user_image": image_path  # Pass the relative image path to the template
-        })
+            # Fetch user image
+            sql_image = """
+                SELECT user_image
+                FROM profileimages
+                WHERE user_id = ?
+            """
+            user_image = getprocess(sql_image, (reader_id,))
+            image_path = f"static/{user_image[0]['user_image']}" if user_image else url_for('static', filename='images/default_profile.png')
+
+            readers_with_history.append({
+                "name": reader["user_name"],
+                "contact": reader["user_contact"] or "",
+                "email": reader["user_email"],
+                "history": unique_books,  # Use the unique book titles
+                "user_image": image_path
+            })
 
     # Sort readers by name
     readers_with_history = sorted(readers_with_history, key=lambda x: x['name'].lower())
@@ -1074,8 +1083,7 @@ def borrow_book(book_id):
 
     return redirect(url_for("books"))
 
-
-#VIEW READER PROFILE
+# VIEW READER PROFILE
 @app.route("/reader_profile")
 def reader_profile():
     print("Session data in reader profile route:", session) 
@@ -1084,6 +1092,7 @@ def reader_profile():
 
     user_id = session.get('user_id')
 
+    # Fetch user data
     sql_user = """
     SELECT u.user_name, u.user_email, u.user_contact, p.user_image
     FROM users u
@@ -1095,6 +1104,7 @@ def reader_profile():
     if user:
         user_data = user[0]
 
+        # Fetch book history
         sql_history = """
         SELECT books.book_title, books.author, books.genre, requests.request_date
         FROM requests
@@ -1103,15 +1113,19 @@ def reader_profile():
         """
         history = getprocess(sql_history, (user_id,))
 
-        book_history = [
-            {
-                "title": record['book_title'],
-                "author": record['author'],
-                "genre": record['genre'],
-                "date": record['request_date']
-            }
-            for record in history
-        ]
+        # Deduplicate book titles
+        seen_titles = set()
+        book_history = []
+        for record in history:
+            title = record['book_title']
+            if title not in seen_titles:
+                seen_titles.add(title)
+                book_history.append({
+                    "title": title,
+                    "author": record['author'],
+                    "genre": record['genre'],
+                    "date": record['request_date']
+                })
 
         return render_template(
             "reader_profile.html",

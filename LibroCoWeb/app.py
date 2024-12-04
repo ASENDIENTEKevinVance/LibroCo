@@ -728,21 +728,22 @@ def readers():
 
     for reader in readers:
         if reader["user_name"] not in seen_names:
-            seen_names.add(reader["user_name"])  # Fix the missing parenthesis here
+            seen_names.add(reader["user_name"])
             
             reader_id = reader['user_id']
 
-            # Fetch book history
+            # Fetch book history from book_transactions table
             sql_history = """
-                SELECT books.book_title 
-                FROM requests
-                JOIN books ON requests.book_id = books.book_id
-                WHERE requests.user_id = ?
+                SELECT DISTINCT books.book_title
+                FROM book_transactions
+                JOIN books ON book_transactions.book_id = books.book_id
+                WHERE book_transactions.user_id = ?
+                AND book_transactions.status IN ('Returned', 'Borrowed')
             """
             history = getprocess(sql_history, (reader_id,))
 
-            # Remove duplicates by converting to a set, then back to a list
-            unique_books = list(set(h['book_title'] for h in history))
+            # Convert results to a list of book titles
+            unique_books = [h['book_title'] for h in history]
 
             # Fetch user image
             sql_image = """
@@ -1130,10 +1131,11 @@ def reader_profile():
 
         # Fetch book history
         sql_history = """
-        SELECT books.book_title, books.author, books.genre, requests.request_date
-        FROM requests
-        JOIN books ON requests.book_id = books.book_id
-        WHERE requests.user_id = ?
+        SELECT books.book_title, books.author, books.genre
+        FROM book_transactions
+        JOIN books ON book_transactions.book_id = books.book_id
+        WHERE book_transactions.user_id = ?
+        AND book_transactions.status IN ('Returned', 'Borrowed')
         """
         history = getprocess(sql_history, (user_id,))
 
@@ -1148,7 +1150,6 @@ def reader_profile():
                     "title": title,
                     "author": record['author'],
                     "genre": record['genre'],
-                    "date": record['request_date']
                 })
 
         return render_template(

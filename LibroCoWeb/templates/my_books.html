@@ -57,14 +57,14 @@
                         </form>
                     </td>
                     <td>
-                        {% if book['renew_count'] < 3 %}
                         <form action="{{ url_for('renew_book', book_id=book['book_id']) }}" method="post">
-                            <button class="action-btn renew-btn">Renew</button>
+                            <button 
+                                class="action-btn renew-btn" 
+                                {% if book['renew_count'] >= 3 %}disabled{% endif %}>
+                                Renew ({{ book['renew_count'] }}/3)
+                            </button>
                         </form>
-                        {% else %}
-                        <button class="action-btn renew-btn" disabled>Renew Limit Reached</button>
-                        {% endif %}
-                    </td>                    
+                    </td>                                                                              
                 </tr>
                 {% endfor %}
             </tbody>

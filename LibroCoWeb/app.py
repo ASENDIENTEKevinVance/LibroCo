@@ -619,34 +619,35 @@ def renew_book(book_id):
 
     user_id = session['user_id']
 
-    # Check the current renew count
+    # Fetch the current renew count
     sql_check_renew_count = """
-    SELECT renew_count
-    FROM book_transactions
-    WHERE book_id = ? AND user_id = ? AND status = 'Borrowed'
+        SELECT renew_count, due_date
+        FROM book_transactions
+        WHERE book_id = ? AND user_id = ? AND status = 'Borrowed'
     """
     result = getprocess(sql_check_renew_count, (book_id, user_id))
-
+    
     if not result:
-        flash("Book not found or not currently borrowed.")
+        flash("Error: Book not found or not borrowed.")
         return redirect(url_for("my_books"))
 
     renew_count = result[0]['renew_count']
 
+    # Prevent further renewals if already at max
     if renew_count >= 3:
         flash("You cannot renew this book more than 3 times.")
         return redirect(url_for("my_books"))
 
-    # Extend the due date by 7 days and increment the renew count
-    sql_update_due_date = """
-    UPDATE book_transactions
-    SET due_date = DATE(due_date, '+7 days'),
-        renew_count = renew_count + 1
-    WHERE book_id = ? AND user_id = ? AND status = 'Borrowed'
+    # Update the due date and increment the renew count
+    sql_update_transaction = """
+        UPDATE book_transactions
+        SET due_date = DATE(due_date, '+7 days'),
+            renew_count = renew_count + 1
+        WHERE book_id = ? AND user_id = ? AND status = 'Borrowed'
     """
-    postprocess(sql_update_due_date, (book_id, user_id))
+    postprocess(sql_update_transaction, (book_id, user_id))
 
-    flash("You have successfully renewed the book for an additional 7 days.")
+    flash(f"You have successfully renewed the book. ({renew_count + 1}/3 renewals used)")
     return redirect(url_for("my_books"))
 
 @app.route("/decline_request", methods=["POST"])
@@ -1040,7 +1041,7 @@ def get_borrowed_books(user_id):
 # Route to display borrowed books
 @app.route('/my_books')
 def my_books():
-    if 'user_id' not in session:  # Check if the user is logged in
+    if 'user_id' not in session:
         return redirect(url_for('login'))
 
     user_id = session['user_id']  # Get the logged-in user's ID
@@ -1048,25 +1049,28 @@ def my_books():
     today = date.today()  # Current date
     expiring_date = today + timedelta(days=3)  # Threshold for expiring books
 
-    # Parse due_date and include renew_count for each book
     for i, book in enumerate(books):
-        book_dict = dict(book)  # Convert the sqlite3.Row object to a dictionary
-        if isinstance(book_dict['due_date'], str):  # Convert due_date to a date object
-            try:
-                book_dict['due_date'] = datetime.strptime(book_dict['due_date'], '%Y-%m-%d').date()
-            except ValueError:
-                book_dict['due_date'] = None  # Default to None if conversion fails
+        book_dict = dict(book)
 
-        # Add renew_count to the book dictionary
-        book_dict['renew_count'] = book_dict.get('renew_count', 0)
+        # Parse due_date
+        if isinstance(book_dict['due_date'], str):
+            book_dict['due_date'] = datetime.strptime(book_dict['due_date'], '%Y-%m-%d').date()
 
-        books[i] = book_dict  # Replace the original book with the updated dictionary
+        # Fetch the renewal count
+        sql_renew_count = """
+            SELECT renew_count 
+            FROM book_transactions
+            WHERE book_id = ? AND user_id = ? AND status = 'Borrowed'
+        """
+        renew_data = getprocess(sql_renew_count, (book_dict['book_id'], user_id))
+        book_dict['renew_count'] = renew_data[0]['renew_count'] if renew_data else 0
 
-    # Render the template with the necessary data
+        books[i] = book_dict
+
     return render_template(
-        'my_books.html', 
-        books=books, 
-        today=today, 
+        'my_books.html',
+        books=books,
+        today=today,
         expiring_date=expiring_date
     )
 

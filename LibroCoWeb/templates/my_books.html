@@ -33,15 +33,6 @@
         <div class="block">
         {% if books %}
         <table class="books-table">
-            <!-- <thead>
-                <tr>
-                    <th>Book Title & Author</th>
-                    <th>Status</th>
-                    <th>Due Date</th>
-                    <th>Return</th>
-                    <th>Renew</th>
-                </tr>
-            </thead> -->
             <tbody>
                 {% for book in books %}
                 <tr>
@@ -66,10 +57,14 @@
                         </form>
                     </td>
                     <td>
+                        {% if book['renew_count'] < 3 %}
                         <form action="{{ url_for('renew_book', book_id=book['book_id']) }}" method="post">
                             <button class="action-btn renew-btn">Renew</button>
                         </form>
-                    </td>
+                        {% else %}
+                        <button class="action-btn renew-btn" disabled>Renew Limit Reached</button>
+                        {% endif %}
+                    </td>                    
                 </tr>
                 {% endfor %}
             </tbody>

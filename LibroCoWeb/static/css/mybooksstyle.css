@@ -61,42 +61,6 @@
     border-radius: 5px; /* Rounded corners */
     width: 100%; /* Allow each book item to fill the width */
 }
-/*
-.book-details {
-    flex-grow: 1;  Allow text details to grow and fill space 
-    display: flex;
-    flex-direction: column; Stack title, author, and status vertically
-}
-*/
-/*
-.return, .renew {
-    display: flex;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 18px; 
-}
-*/
-
-/*
-.return {
-    background-color: transparent; 
-    color: #066A69;
-    margin-right: 10px; 
-    padding: 10px 20px;
-}
-
-.renew {
-    background-color: #FFCB44; 
-    color: #111010; 
-    padding: 10px 20px;
-}
-
-.renew:hover {
-    background-color: #e9aa17;
-}
-*/
 
 /* Disabled button styling */
 .renew-btn:disabled {
@@ -223,4 +187,12 @@
 
 #bookStatus.expiring {
     color: #E3460D;
+}
+
+.image_container {
+width: 15%;
+}
+
+.detail_container {
+    width: 25%
 }

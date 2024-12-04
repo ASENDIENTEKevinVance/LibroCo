@@ -45,8 +45,8 @@
             <tbody>
                 {% for book in books %}
                 <tr>
-                    <td><img src="{{ book['image'] }}" alt="{{ book['book_title'] }}"></td>
-                    <td>
+                    <td class="image_container"><img src="{{ book['image'] }}" alt="{{ book['book_title'] }}"></td>
+                    <td class="detail_container">
                         <strong class="mybook book-title">{{ book['book_title'] }}</strong><br>
                         <small class="mybook book-author">{{ book['author'] }}</small>
                     </td>

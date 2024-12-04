@@ -84,6 +84,7 @@
 
 .cancel_button:hover {
     background-color: #969696;
+    color: white;
 }
 
 .save_button {

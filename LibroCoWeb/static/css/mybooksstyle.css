@@ -176,7 +176,7 @@
 }
 
 #bookStatus {
-    font-size: 15px; /* Size for status */
+    font-size: 18px; /* Size for status */
     font-style: italic; /* Italic for status */
     font-weight: bold; /* Bold for status */
 }
@@ -195,4 +195,14 @@ width: 15%;
 
 .detail_container {
     width: 25%
+}
+
+.action-btn.return-btn:hover {
+    background-color: #969696;
+    color: white;
+}
+
+.action-btn.renew-btn:hover {
+    background-color: #e9aa17;
+    color: #111010;
 }

@@ -214,9 +214,25 @@ body {
 
 .back_button:hover {
     background-color: #969696;
+    color: white;
     padding-top: 15px;
     padding-bottom: 15px;
     margin-top: 0px;
+}
+
+.borrow_button:hover {
+    background-color: #e9aa17;
+    color: #111010;
+    font-weight: normal;
+}
+
+.addwishlist_button:hover {
+    background-color: #FFE7A8;
+}
+
+.btn:hover {
+    background-color: #e9aa17;
+    color: #111010;
 }
 
 .btn {

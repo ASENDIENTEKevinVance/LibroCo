@@ -304,6 +304,10 @@ a:active {
     margin-left: -5px;
 }
 
+.addbook-button:hover {
+    background-color: #074F4E;
+}
+
 .no-hover {
     text-decoration: none;
     color: white;
@@ -505,12 +509,12 @@ a:active {
 
 /* Styling for status labels */
 .available {
-    color: #009E05;
+    color: green;
     font-style: italic;
 }
 
 .unavailable {
-    color: red;
+    color: #6F0C0C;
     font-style: italic;
 }
 
@@ -559,7 +563,7 @@ button.approve-btn.disabled {
 /* DELETE BUTTON STYLESS */
 .delete_button {
     background-color: #f8f8f8;
-    color: rgb(255, 2, 2);
+    color: #8e0101;
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
